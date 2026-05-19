@@ -7,30 +7,33 @@
 
 ## ✅ 1. Introdução
 
-Containers Docker são, por natureza, **efêmeros**: ao remover/recriar um container, tudo que estava no sistema de arquivos interno pode ser perdido. Por isso, em cenários com banco de dados, logs e arquivos importantes, precisamos de **persistência** usando **volumes**.
+Containers Docker são, por natureza, **efêmeros**: ao remover/recriar um container, tudo que estava no sistema de arquivos interno pode ser perdido. Em infraestrutura moderna, isso é crítico para **bancos de dados**, **logs** e **artefatos** que precisam sobreviver ao ciclo de vida do container.
 
-Nesta atividade, foram aplicados conceitos de:
-- **Named Volumes** (volumes gerenciados pelo Docker, ideais para dados do banco)
-- **Bind Mounts** (pasta do host montada no container, muito usado em desenvolvimento)
-- **Compartilhamento de volumes** (mais de um container usando o mesmo armazenamento)
-- **Backup/Restore** e **automação operacional** via script Bash
+Para resolver isso, utilizamos **volumes**, que desacoplam os dados do container, permitindo persistência e compartilhamento entre serviços. Nesta atividade, foram aplicados:
 
-🎯 **Objetivo:** executar 5 cenários práticos e documentar comandos, validações e evidências, permitindo que outro usuário consiga reproduzir parcialmente os testes usando apenas este README.
+- **Named Volumes**: volumes gerenciados pelo Docker, ideais para dados de banco.
+- **Bind Mounts**: pasta do host montada no container (uso típico em desenvolvimento).
+- **Compartilhamento de Volumes**: múltiplos containers acessando o mesmo armazenamento.
+- **Backup/Restore** e **automação** via script Bash.
+
+🎯 **Objetivo:** executar 5 cenários práticos e documentar comandos, validações, evidências e troubleshooting, permitindo que outro usuário reproduza parcialmente os cenários usando apenas este README.
 
 ---
 
 ## 🖥️ 2. Ambiente Utilizado
 
-- **S.O.:** Ubuntu 24.04 LTS (VirtualBox)
-- **Docker Engine:** 24.x
-- **Docker Compose:** 2.x
+- **S.O.:** Ubuntu 24.04 LTS (VirtualBox) — usuário `vboxuser@ubuntulucas`
+- **Docker Engine:** Docker version 24.0.7
+- **Docker Compose:** **não utilizado** (atividade feita “no braço” com `docker run`/`docker volume`)
 - **Hardware (VM):** 4 GB RAM / 2 vCPUs
+
+> 🔎 Observação: as versões foram informadas conforme o ambiente utilizado no laboratório.  
+> Recomenda-se validar localmente com os comandos abaixo, caso necessário.
 
 ### (Opcional) Comandos para conferir o ambiente
 ```bash
 lsb_release -a
 docker --version
-docker compose version
 free -h
 lscpu
 ```
@@ -45,11 +48,12 @@ lscpu
   - `backups/`
   - `scripts/`
   - `src/`
-  - `screenshots/` (prints/evidências)
+  - `screenshots/` (evidências)
 
-Crie as pastas (se necessário):
+Criar pastas (se necessário):
 ```bash
 mkdir -p backups scripts src screenshots
+mkdir -p screenshots/cenario1 screenshots/cenario2 screenshots/cenario3 screenshots/cenario4 screenshots/cenario5
 ```
 
 > ℹ️ Observação: no meu ambiente, utilizei `sudo docker ...`. Caso seu usuário esteja no grupo `docker`, pode executar sem `sudo`.
@@ -58,10 +62,10 @@ mkdir -p backups scripts src screenshots
 
 # 🧩 CENÁRIO 1 — Persistência de Dados com MySQL e Named Volume
 
-🎯 **Objetivo:** validar persistência de dados após remoção/recriação de containers usando **Named Volume**.
+🎯 **Objetivo:** validar persistência de dados após remover/recriar containers usando **Named Volume**.
 
-## 🔎 Conceito técnico
-O MySQL armazena dados em **`/var/lib/mysql`**. Ao montar um **volume nomeado** nesse caminho, os dados ficam fora do container e persistem mesmo que o container seja removido.
+## 🔎 Conceito técnico (como funciona)
+O MySQL grava os dados em **`/var/lib/mysql`**. Ao montar um **volume nomeado** nesse caminho, os dados ficam fora do container e persistem mesmo que o container seja removido.
 
 ---
 
@@ -84,7 +88,7 @@ docker run -d \
 
 ## ✅ Etapa 3 — Criar banco, tabela e inserir registros (mínimo 3)
 
-Crie o arquivo `scripts/mysql-init.sql`:
+Arquivo: `scripts/mysql-init.sql`
 ```sql
 CREATE DATABASE IF NOT EXISTS empresa_db;
 USE empresa_db;
@@ -103,7 +107,7 @@ INSERT INTO usuarios (nome, email, departamento) VALUES
 ('Daniel Ohata', 'daniel.ohata@facens.br', 'Gestão');
 ```
 
-Executar o script no MySQL:
+Executar o script:
 ```bash
 docker exec -i mysql-persistente mysql -uroot -proot123 < scripts/mysql-init.sql
 ```
@@ -117,7 +121,7 @@ docker exec -it mysql-persistente \
 
 ## ✅ Etapa 4 — Validar persistência (remover e recriar container)
 
-Remover o container:
+Remover o container (sem apagar o volume):
 ```bash
 docker stop mysql-persistente
 docker rm mysql-persistente
@@ -146,10 +150,10 @@ docker exec -it mysql-recuperado \
 **Cenário 1: Evidência 1 e 2 (SELECT com 3 registros + recuperação após rm/run)**
 
 - **Evidência 1 — SELECT com 3 registros (prova inserção):**  
-  ![C1 - Evidência 1 (Tabela/SELECT)](screenshots/c1-e1-tabela.png)
+  ![C1 - Evidência 1 - Tabela com 3 registros](screenshots/cenario1/c1-e1-tabela.png)
 
 - **Evidência 2 — Stop/RM + Run novo + SELECT (prova persistência):**  
-  ![C1 - Evidência 2 (Recuperação)](screenshots/c1-e2-recuperacao.png)
+  ![C1 - Evidência 2 - Recuperação após recriar container](screenshots/cenario1/c1-e2-recuperacao.png)
 
 ---
 
@@ -158,6 +162,10 @@ docker exec -it mysql-recuperado \
 🎯 **Objetivo:** compreender estratégias de backup e recuperação com:
 - **mysqldump** (backup lógico)
 - **tar.gz do volume** (backup físico)
+
+## 🔎 Conceito técnico (diferença)
+- **mysqldump**: exporta o banco em formato SQL (lógico).
+- **tar.gz do volume**: captura o conteúdo do armazenamento (físico), útil para restauração rápida do ambiente do banco.
 
 ---
 
@@ -180,26 +188,36 @@ Conferir arquivos gerados:
 ls -lh backups/
 ```
 
-## ✅ Etapa 3 — Simular perda do volume e restaurar
+## ✅ Etapa 3 — Restauração no volume original (recuperação “onde os dados pertencem”)
 
-> ⚠️ Para simular “perda”, o mais comum é remover o volume e recriá-lo vazio.  
-> **ATENÇÃO:** isso apaga os dados do volume. Faça somente se tiver o backup gerado acima.
+> ✅ Nesta atividade, o restore foi realizado **no mesmo volume `mysql-prod-data`**, injetando os dados de volta no local correto.
 
-(1) Remover e recriar volume (simulação de perda):
+Arquivo: `scripts/restore.sh` (recomendado para padronizar)
 ```bash
-docker volume rm mysql-prod-data
-docker volume create mysql-prod-data
-```
+#!/bin/bash
+set -e
 
-(2) Restaurar o `.tar.gz` no volume vazio:
-```bash
+VOLUME="mysql-prod-data"
+ARQ="../backups/mysql-backup-manual.tar.gz"
+
+echo "[INFO] Restaurando backup no volume: $VOLUME"
 docker run --rm \
-  -v mysql-prod-data:/dest \
-  -v "$(pwd)/backups":/backup \
+  -v ${VOLUME}:/dest \
+  -v "$(pwd)/.."/backups:/backup \
   alpine tar xzf /backup/mysql-backup-manual.tar.gz -C /dest
+
+echo "[SUCESSO] Restore concluído no volume: $VOLUME"
 ```
 
-(3) Subir MySQL usando o volume restaurado:
+Executar o restore:
+```bash
+chmod +x scripts/restore.sh
+cd scripts
+sudo ./restore.sh
+cd ..
+```
+
+Subir MySQL apontando para o volume restaurado:
 ```bash
 docker run -d \
   --name mysql-restaurado \
@@ -208,7 +226,7 @@ docker run -d \
   mysql:8.0
 ```
 
-(4) Validar dados restaurados (consulta):
+Validar funcionamento (consulta):
 ```bash
 docker exec -it mysql-restaurado \
   mysql -uroot -proot123 \
@@ -222,30 +240,30 @@ docker exec -it mysql-restaurado \
 **Cenário 2: Evidência 3 e 4 (mysqldump + ls mostrando dump e .tar.gz)**
 
 - **Evidência 3 — mysqldump (prova dump gerado):**  
-  ![C2 - Evidência 3 (Dump)](screenshots/c2-e3-dump.png)
+  ![C2 - Evidência 3 - Dump gerado](screenshots/cenario2/c2-e3-dump.png)
 
 - **Evidência 4 — ls backups/ (prova dump + tar.gz no diretório):**  
-  ![C2 - Evidência 4 (Arquivos)](screenshots/c2-e4-arquivos.png)
+  ![C2 - Evidência 4 - Arquivos de backup no diretório](screenshots/cenario2/c2-e4-arquivos.png)
 
 ---
 
 # 🔁 CENÁRIO 3 — Bind Mount e Desenvolvimento
 
-🎯 **Objetivo:** demonstrar **Bind Mount** em desenvolvimento (sincronização host ↔ container).
+🎯 **Objetivo:** demonstrar **Bind Mount** em ambiente de desenvolvimento (sincronização host ↔ container).
 
-## 🔎 Conceito técnico
+## 🔎 Conceito técnico (como funciona)
 - **Bind Mount** monta uma pasta do **host** dentro do container.
-- Alterações no host aparecem imediatamente no container ✅
+- Alterações feitas no arquivo **no Host (Ubuntu)** aparecem **imediatamente** dentro do container (ótimo para desenvolvimento).
 
 ---
 
-## ✅ Etapa 1 — Criar diretório local e arquivo
+## ✅ Etapa 1 — Criar diretório local e arquivo (Host)
 ```bash
 mkdir -p src/app
 echo "console.log('Ambiente de Dev Ativo - Lucas');" > src/app/index.js
 ```
 
-## ✅ Etapa 2 — Subir container Node montando a pasta do host
+## ✅ Etapa 2 — Subir container Node montando a pasta do Host
 ```bash
 docker run -d \
   --name dev-node \
@@ -258,7 +276,7 @@ docker run -d \
 docker exec -it dev-node cat /usr/src/app/index.js
 ```
 
-## ✅ Etapa 4 — Alterar no host e validar atualização no container (real-time)
+## ✅ Etapa 4 — Alterar no Host e validar atualização no container (real-time)
 ```bash
 echo 'console.log("Atualizacao em tempo real via Bind Mount!");' >> src/app/index.js
 docker exec -it dev-node cat /usr/src/app/index.js
@@ -270,22 +288,22 @@ docker exec -it dev-node cat /usr/src/app/index.js
 
 **Cenário 3: Evidência 5 e 6 (criação do index.js + atualização em tempo real)**
 
-- **Evidência 5 — Criação + cat do index.js (prova bind mount funcionando):**  
-  ![C3 - Evidência 5 (Criação)](screenshots/c3-e5-criacao.png)
+- **Evidência 5 — Criação + leitura do arquivo no container (prova bind mount):**  
+  ![C3 - Evidência 5 - Arquivo criado no Host e lido no container](screenshots/cenario3/c3-e5-criacao.png)
 
-- **Evidência 6 — Atualização refletida no container (prova real-time):**  
-  ![C3 - Evidência 6 (Real-time)](screenshots/c3-e6-realtime.png)
+- **Evidência 6 — Alteração no Host refletida no container (prova real-time):**  
+  ![C3 - Evidência 6 - Atualização em tempo real](screenshots/cenario3/c3-e6-realtime.png)
 
 ---
 
 # 🔗 CENÁRIO 4 — Compartilhamento de Dados Entre Containers
 
-🎯 **Objetivo:** centralizar logs/arquivos com volume compartilhado por dois containers:
-- **produtor** (escreve)
-- **consumidor** (lê em tempo real)
+🎯 **Objetivo:** centralizar logs/arquivos com um **volume compartilhado** por dois containers:
+- **produtor** (escreve no volume)
+- **consumidor** (lê do volume em tempo real)
 
 ## 🔎 Conceito técnico
-Um volume pode ser montado por múltiplos containers. Assim, um container pode escrever em um arquivo e o outro pode ler esse mesmo arquivo instantaneamente, sem depender do sistema de arquivos interno do container.
+Um volume pode ser montado por múltiplos containers. Assim, um container escreve em um arquivo e outro container lê o mesmo arquivo, sem depender do filesystem interno do container.
 
 ---
 
@@ -320,11 +338,11 @@ docker logs -f consumidor
 
 **Cenário 4: Evidência 7 e 8 (docker run do consumidor + docker logs -f)**
 
-- **Evidência 7 — docker run do consumidor (prova container consumidor criado):**  
-  ![C4 - Evidência 7 (Consumidor)](screenshots/c4-e7-consumidor.png)
+- **Evidência 7 — Execução do consumidor (prova do container com volume montado):**  
+  ![C4 - Evidência 7 - Container consumidor criado](screenshots/cenario4/c4-e7-consumidor.png)
 
-- **Evidência 8 — docker logs -f consumidor (prova leitura em tempo real):**  
-  ![C4 - Evidência 8 (Logs)](screenshots/c4-e8-logs.png)
+- **Evidência 8 — Logs em tempo real (prova do compartilhamento):**  
+  ![C4 - Evidência 8 - Logs em tempo real](screenshots/cenario4/c4-e8-logs.png)
 
 ---
 
@@ -332,11 +350,14 @@ docker logs -f consumidor
 
 🎯 **Objetivo:** automatizar backup do volume via script Bash gerando `.tar.gz` com timestamp.
 
+## 🔎 Conceito técnico
+Automação operacional reduz falhas humanas e padroniza rotinas. Aqui, o script executa o backup físico do volume e salva em `backups/` com nome único por timestamp.
+
 ---
 
-## ✅ Etapa 1 — Criar script `scripts/backup.sh`
+## ✅ Etapa 1 — Script `scripts/backup.sh`
 
-Crie o arquivo `scripts/backup.sh`:
+Arquivo: `scripts/backup.sh`
 ```bash
 #!/bin/bash
 set -e
@@ -366,11 +387,11 @@ chmod +x scripts/backup.sh
 ```bash
 cd scripts
 sudo ./backup.sh
+cd ..
 ```
 
 ## ✅ Etapa 3 — Validar backups gerados
 ```bash
-cd ..
 ls -lh backups/
 ```
 
@@ -380,38 +401,63 @@ ls -lh backups/
 
 **Cenário 5: Evidência 9 e 10 (execução do backup.sh + ls final com backups)**
 
-- **Evidência 9 — Execução do backup.sh (prova automação e sucesso):**  
-  ![C5 - Evidência 9 (Script)](screenshots/c5-e9-script.png)
+- **Evidência 9 — Execução do script com sucesso:**  
+  ![C5 - Evidência 9 - Execução do backup.sh](screenshots/cenario5/c5-e9-script.png)
 
-- **Evidência 10 — ls backups/ final (prova backups gerados):**  
-  ![C5 - Evidência 10 (Final)](screenshots/c5-e10-final.png)
-
----
-
-## 🛠️ 4. Problemas Encontrados
-
-### 1) Permissões em diretórios montados (logs/arquivos)
-- **Problema:** erro de acesso ao gravar/ler em diretórios montados.
-- **Solução:** ajustar permissões com `chmod`/`chown` e validar o usuário que executa o Docker.
-
-### 2) Conflitos entre Git local e remoto
-- **Problema:** divergência de histórico/arquivos no push.
-- **Solução:** resolver conflitos (merge) ou utilizar push forçado quando aplicável (com cuidado).
-
-### 3) Warning de senha no MySQL (CLI)
-- **Problema:** aviso “Using a password on the command line interface can be insecure.”
-- **Solução:** esperado em laboratório; em produção, usar secrets/variáveis de ambiente de forma segura.
+- **Evidência 10 — Listagem final comprovando backups gerados:**  
+  ![C5 - Evidência 10 - Backups gerados no diretório](screenshots/cenario5/c5-e10-final.png)
 
 ---
 
-## 📁 5. Estrutura do Repositório
+## 🧾 4. Evidências (Prints / Logs / Resultados)
 
-- `backups/` — dumps e backups `.tar.gz`
-- `scripts/` — scripts `.sh` e SQL `.sql`
-- `screenshots/` — evidências (prints) organizadas por cenário
+> ✅ Esta seção é um **índice geral** das evidências exigidas.  
+> As comprovações também aparecem **dentro de cada cenário**, no tópico “Validações e Evidências”.
+
+### CENÁRIO 1 — Persistência (MySQL + Named Volume)
+- Evidência 1: `screenshots/cenario1/c1-e1-tabela.png`
+- Evidência 2: `screenshots/cenario1/c1-e2-recuperacao.png`
+
+### CENÁRIO 2 — Backup e Restauração
+- Evidência 3: `screenshots/cenario2/c2-e3-dump.png`
+- Evidência 4: `screenshots/cenario2/c2-e4-arquivos.png`
+
+### CENÁRIO 3 — Bind Mount
+- Evidência 5: `screenshots/cenario3/c3-e5-criacao.png`
+- Evidência 6: `screenshots/cenario3/c3-e6-realtime.png`
+
+### CENÁRIO 4 — Compartilhamento
+- Evidência 7: `screenshots/cenario4/c4-e7-consumidor.png`
+- Evidência 8: `screenshots/cenario4/c4-e8-logs.png`
+
+### CENÁRIO 5 — Automação
+- Evidência 9: `screenshots/cenario5/c5-e9-script.png`
+- Evidência 10: `screenshots/cenario5/c5-e10-final.png`
+
+---
+
+## 🛠️ 5. Problemas Encontrados (Troubleshooting Real)
+
+### 1) Warning de segurança do MySQL no CLI
+- **Problema:** `mysql: [Warning] Using a password on the command line interface can be insecure.`
+- **Contexto:** ocorreu ao executar `mysql`/`mysqldump` com `-pSENHA` no terminal.
+- **Solução/Boa prática:** para laboratório é aceitável; em produção recomenda-se uso de secrets/variáveis seguras e evitar expor senha no histórico do shell.
+
+### 2) Falha de push no Git (conflito/refs)
+- **Problema:** `error: failed to push some refs`
+- **Contexto:** ocorreu durante a organização das pastas/arquivos no repositório.
+- **Solução aplicada:** resolução de conflitos e ajuste do histórico (merge/rebase conforme o caso), garantindo envio correto para o remoto e mantendo o histórico de commits.
+
+---
+
+## 📁 Estrutura do Repositório
+
+- `backups/` — arquivos gerados: `dump-empresa.sql`, `mysql-backup-manual.tar.gz`, `mysql-backup-*.tar.gz`
+- `scripts/` — scripts utilizados: `mysql-init.sql`, `backup.sh`, `restore.sh`
+- `screenshots/` — evidências (prints) organizadas por cenário (`cenario1` até `cenario5`)
 - `src/` — código fonte (ex.: `src/app/index.js`)
 
 ---
 
-## 🔗 6. Link do Repositório
+## 🔗 Link do Repositório
 https://github.com/LcasQueirxz/infra-persistencia-docker
