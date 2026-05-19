@@ -413,16 +413,5 @@ ls -lh backups/
 
 ---
 
-## ✅ 6. Entregáveis Obrigatórios (Checklist)
-
-- [x] Link do Repositório GitHub
-- [x] README.md completo (reprodução parcial)
-- [x] Scripts utilizados (.sh e .sql)
-- [x] Evidências reais (prints/logs)
-- [x] Arquivos de backup gerados
-- [x] Histórico de commits mostrando evolução
-
----
-
-## 🔗 7. Link do Repositório
+## 🔗 6. Link do Repositório
 https://github.com/LcasQueirxz/infra-persistencia-docker
