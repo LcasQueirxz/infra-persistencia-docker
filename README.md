@@ -412,24 +412,23 @@ ls -lh backups/
 > As comprovações também aparecem **dentro de cada cenário**, no tópico “Validações e Evidências”.
 
 ### CENÁRIO 1 — Persistência (MySQL + Named Volume)
-- Evidência 1: `screenshots/cenario1/c1-e1-tabela.png`
-- Evidência 2: `screenshots/cenario1/c1-e2-recuperacao.png`
+- [Evidência 1](screenshots/cenario1/c1-e1-tabela.png)
+- [Evidência 2](screenshots/cenario1/c1-e2-recuperacao.png)
 
 ### CENÁRIO 2 — Backup e Restauração
-- Evidência 3: `screenshots/cenario2/c2-e3-dump.png`
-- Evidência 4: `screenshots/cenario2/c2-e4-arquivos.png`
+- [Evidência 3](screenshots/cenario2/c2-e3-dump.png)
+- [Evidência 4](screenshots/cenario2/c2-e4-arquivos.png)
 
 ### CENÁRIO 3 — Bind Mount
-- Evidência 5: `screenshots/cenario3/c3-e5-criacao.png`
-- Evidência 6: `screenshots/cenario3/c3-e6-realtime.png`
+- [Evidência 5](screenshots/cenario3/c3-e5-criacao.png)
+- [Evidência 6](screenshots/cenario3/c3-e6-realtime.png)
 
 ### CENÁRIO 4 — Compartilhamento
-- Evidência 7: `screenshots/cenario4/c4-e7-consumidor.png`
-- Evidência 8: `screenshots/cenario4/c4-e8-logs.png`
+- [Evidência 7](screenshots/cenario4/c4-e8-logs.png)
 
 ### CENÁRIO 5 — Automação
-- Evidência 9: `screenshots/cenario5/c5-e9-script.png`
-- Evidência 10: `screenshots/cenario5/c5-e10-final.png`
+- [Evidência 8](screenshots/cenario5/c5-e9-script.png)
+- [Evidência 9](screenshots/cenario5/c5-e10-final.png)
 
 ---
 
