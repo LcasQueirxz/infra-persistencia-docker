@@ -336,12 +336,9 @@ docker logs -f consumidor
 
 ## ✅ Validações e Evidências (Cenário 4)
 
-**Cenário 4: Evidência 7 e 8 (docker run do consumidor + docker logs -f)**
+**Cenário 4: Evidência 7 (docker run do consumidor + docker logs -f)**
 
-- **Evidência 7 — Execução do consumidor (prova do container com volume montado):**  
-  ![C4 - Evidência 7 - Container consumidor criado](screenshots/cenario4/c4-e7-consumidor.png)
-
-- **Evidência 8 — Logs em tempo real (prova do compartilhamento):**  
+- **Evidência 8 — Logs em tempo real, e execução do consumidor (prova do container com volume montado:**  
   ![C4 - Evidência 8 - Logs em tempo real](screenshots/cenario4/c4-e8-logs.png)
 
 ---
@@ -399,12 +396,12 @@ ls -lh backups/
 
 ## ✅ Validações e Evidências (Cenário 5)
 
-**Cenário 5: Evidência 9 e 10 (execução do backup.sh + ls final com backups)**
+**Cenário 5: Evidência 8 e 9 (execução do backup.sh + ls final com backups)**
 
-- **Evidência 9 — Execução do script com sucesso:**  
+- **Evidência 8 — Execução do script com sucesso:**  
   ![C5 - Evidência 9 - Execução do backup.sh](screenshots/cenario5/c5-e9-script.png)
 
-- **Evidência 10 — Listagem final comprovando backups gerados:**  
+- **Evidência 9 — Listagem final comprovando backups gerados:**  
   ![C5 - Evidência 10 - Backups gerados no diretório](screenshots/cenario5/c5-e10-final.png)
 
 ---
