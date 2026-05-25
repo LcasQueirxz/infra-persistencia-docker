@@ -1,4 +1,4 @@
-# AC2 — Infraestrutura de Persistência e Volumes Docker 🐳💾
+# AC2 — Infraestrutura de Persistência e Volumes Docker 🐳
 
 **Aluno:** Lucas Gabriel de Campos Queiroz
 **RA:** 247468
