@@ -1,6 +1,7 @@
 # AC2 — Infraestrutura de Persistência e Volumes Docker 🐳💾
 
-**Aluno:** Lucas Gabriel de Campos Queiroz  
+**Aluno:** Lucas Gabriel de Campos Queiroz
+**RA:** 247468
 **Curso:** Gestão de T.I (FACENS)
 
 ---
